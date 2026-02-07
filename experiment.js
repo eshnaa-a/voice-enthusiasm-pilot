@@ -5,7 +5,10 @@ const PARTICIPANT_ID = urlParams.get('PID') || `P${Math.floor(Math.random() * 1e
 /* ---------- Initialize jsPsych ---------- */
 const jsPsych = initJsPsych({
     show_progress_bar: true,
-    auto_update_progress_bar: true
+    auto_update_progress_bar: true,
+    on_finish: () => {
+        document.body.innerHTML = `<h2>Thank you!</h2><p>You have completed the experiment.</p>`;
+    }
 });
 
 /* ---------- Stimuli Definitions ---------- */
@@ -80,7 +83,7 @@ function createAudioRatingTrial(stimulus, blockNumber, totalBlocks) {
                 Note: You must listen to the entire audio clip to see the questions.
             </p>
 
-            <div id="rating-questions" style="display:none;">
+            <div id="rating-questions-${blockNumber}-${stimulus.voice}" style="display:none;">
 
                 <div style="margin-bottom:30px;">
                     <p><b>On a scale of 1 to 7, how enthusiastic does this person sound to you?
@@ -107,7 +110,7 @@ function createAudioRatingTrial(stimulus, blockNumber, totalBlocks) {
         button_label: "Submit",
         on_load: function() {
             const audio = document.getElementById("audio-player");
-            const questions = document.getElementById("rating-questions");
+            const questions = document.getElementById(`rating-questions-${blockNumber}-${stimulus.voice}`);
 
             audio.playbackRate = 1.0;
 
@@ -136,9 +139,14 @@ function createAudioRatingTrial(stimulus, blockNumber, totalBlocks) {
 
         // <-- on_finish goes here, at the same level as type, html, button_label, on_load
         on_finish: function(data) {
-            const form = document.querySelector("#rating-questions");
-            const enthusiasm = form.querySelector('input[name="enthusiasm"]:checked').value;
-            const dominance = form.querySelector('input[name="dominance"]:checked').value;
+            const form = document.getElementById(`rating-questions-${blockNumber}-${stimulus.voice}`);
+            if (!form) {
+                console.warn("Form not found!");
+                return;
+            }
+
+            const enthusiasmInput = form.querySelector('input[name="enthusiasm"]:checked');
+            const dominanceInput = form.querySelector('input[name="dominance"]:checked');
 
             const trialData = {
                 participant: PARTICIPANT_ID,
@@ -146,8 +154,8 @@ function createAudioRatingTrial(stimulus, blockNumber, totalBlocks) {
                 gender: stimulus.gender,
                 pitch: stimulus.pitch,
                 block: blockNumber,
-                enthusiasm: parseInt(enthusiasm),
-                dominance: parseInt(dominance),
+                enthusiasm: enthusiasmInput ? parseInt(enthusiasmInput.value) : null,
+                dominance: dominanceInput ? parseInt(dominanceInput.value) : null,
                 timestamp: new Date().toISOString()
             };
 
@@ -263,6 +271,3 @@ timeline.push({
 /* ---------- Run Experiment ---------- */
 jsPsych.run(timeline);
 
-jsPsych.onFinish(() => {
-    document.body.innerHTML = `<h2>Thank you!</h2><p>You have completed the experiment.</p>`;
-});
