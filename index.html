@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voice Enthusiasm Pilot</title>
+
+    <!-- Core jsPsych -->
+    <link rel="stylesheet" href="jspsych.css">
+    <script src="jspsych.js"></script>
+
+    <!-- Plugins -->
+    <script src="plugins/plugin-html-button-response.js"></script>
+    <script src="plugins/plugin-audio-button-response.js"></script>
+    <script src="plugins/plugin-html-slider-response.js"></script>
+    <script src="plugins/plugin-html-keyboard-response.js"></script>
+    <script src="plugins/plugin-survey-html-form.js"></script>
+
+    <!-- Optional: custom CSS for circle labels if needed -->
+    <style>
+        .circle-container {
+            display: flex;
+            justify-content: space-between;
+        }
+        .circle-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .circle {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid black;
+            margin-bottom: 5px;
+        }
+        .circle-label {
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Your experiment will render here -->
+    <script type="module">
+    // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+      import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyCK8Oq8DYla7dQeuF9vud_hgeQhSr4eGMs",
+        authDomain: "enthusiasm-study-pilot.firebaseapp.com",
+        projectId: "enthusiasm-study-pilot",
+        storageBucket: "enthusiasm-study-pilot.firebasestorage.app",
+        messagingSenderId: "40604353803",
+        appId: "1:40604353803:web:3a0a5d20d0423f903fce0e",
+        measurementId: "G-3G0BSWSHJW"
+      };
+
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+
+      // Initialize Firestore
+      const db = getFirestore(app);
+      
+    // Make saveTrialData globally accessible
+    window.saveTrialData = async function(data) {
+        try {
+            await addDoc(collection(db, "participant_data"), data);
+            console.log("Data saved to Firestore!");
+        } catch (error) {
+            console.error("Error saving data: ", error);
+        }
+    };
+
+
+    </script>
+
+    <!-- Experiment script -->
+    <script src="experiment.js"></script>
+</body>
+</html>
