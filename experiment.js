@@ -133,20 +133,12 @@ function createAudioRatingTrial(stimulus, blockNumber, totalBlocks) {
             });
 
             audio.addEventListener("ended", () => {
-               questions.style.display = "block";
+                questions.style.display = "block";
             });
         },
 
-        // <-- on_finish goes here, at the same level as type, html, button_label, on_load
         on_finish: function(data) {
-            const form = document.getElementById(`rating-questions-${blockNumber}-${stimulus.voice}`);
-            if (!form) {
-                console.warn("Form not found!");
-                return;
-            }
-
-            const enthusiasmInput = form.querySelector('input[name="enthusiasm"]:checked');
-            const dominanceInput = form.querySelector('input[name="dominance"]:checked');
+            const responses = data.response;
 
             const trialData = {
                 participant: PARTICIPANT_ID,
@@ -154,11 +146,10 @@ function createAudioRatingTrial(stimulus, blockNumber, totalBlocks) {
                 gender: stimulus.gender,
                 pitch: stimulus.pitch,
                 block: blockNumber,
-                enthusiasm: enthusiasmInput ? parseInt(enthusiasmInput.value) : null,
-                dominance: dominanceInput ? parseInt(dominanceInput.value) : null,
+                enthusiasm: parseInt(responses.enthusiasm),
+                dominance: parseInt(responses.dominance),
                 timestamp: new Date().toISOString()
             };
-
             saveTrialData(trialData);
         }
     };
