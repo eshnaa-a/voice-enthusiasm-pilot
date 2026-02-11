@@ -2,6 +2,9 @@
 const urlParams = new URLSearchParams(window.location.search);
 const PARTICIPANT_ID = urlParams.get('PID') || `P${Math.floor(Math.random() * 1e9)}`;
 
+/*--------Confirmation code---------*/
+const CONFIRMATION_CODE = "1CD32A66A5";
+
 /* ---------- Initialize jsPsych ---------- */
 const jsPsych = initJsPsych({
     show_progress_bar: true,
@@ -41,14 +44,24 @@ voices.forEach(voice => {
             pitch: pitch,
             file: `audio_files/${voice.gender.toLowerCase()}_voice${voice.id.slice(1)}_pitch${pitchMap[pitch]}.wav`
         });
-
     });
+
+    // Add extra unsped low version for males only
+    if (voice.gender === "male") {
+        stimuli.push({
+            voice: voice.id,
+            gender: voice.gender,
+            pitch: "low_unsped",
+            file: `audio_files/${voice.gender.toLowerCase()}_voice${voice.id.slice(1)}_pitch4.wav`
+        });
+    }
+    
 });
 
 /* ---------- Randomize and split into 3 blocks ---------- */
 const shuffledStimuli = jsPsych.randomization.shuffle(stimuli);
 
-const blockSize = shuffledStimuli.length / 3; // 36 / 3 = 12
+const blockSize = Math.floor(shuffledStimuli.length / 3); // 42 / 3 = 14
 const blocks = [
     shuffledStimuli.slice(0, blockSize),
     shuffledStimuli.slice(blockSize, blockSize*2),
@@ -148,6 +161,7 @@ function createAudioRatingTrial(stimulus, blockNumber, totalBlocks) {
                 block: blockNumber,
                 enthusiasm: parseInt(responses.enthusiasm),
                 dominance: parseInt(responses.dominance),
+                reaction_time: data.rt,
                 timestamp: new Date().toISOString()
             };
             saveTrialData(trialData);
@@ -177,7 +191,7 @@ var consent_html = `
 
   <p><strong>Risks and Discomforts:</strong> We do not foresee any risks or discomfort from your participation in the research. You may, however, experience some frustration or stress if you believe that you are not doing well. Certain participants may have difficulty with some of the tasks. If you do feel discomfort you may withdraw at any time.</p>
 
-  <p><strong>Benefits:</strong> There is no direct benefit to you, but knowledge may be gained that may help others in the future. The study takes approximately ___ minutes to complete, and you will receive ____ USD for your participation.</p>
+  <p><strong>Benefits:</strong> There is no direct benefit to you, but knowledge may be gained that may help others in the future. The study takes approximately 15 minutes to complete, and you will receive $2.50 USD for your participation.</p>
 
   <p><strong>Voluntary Participation:</strong> Your participation is entirely voluntary and you may choose to stop participating at any time. Your decision will not affect your relationship with the researcher, study staff, or York University.</p>
 
@@ -221,14 +235,134 @@ timeline.push({
     }
 });
 
+// ---------- Demographic Questions ----------
+const demographicsTrial = {
+    type: jsPsychSurveyHtmlForm,
+    preamble: `<h2>Demographic Information</h2>
+               <p>Please answer the following questions:</p>`,
+    html: `
+        <p>
+            <label>1. What is your age?</label><br>
+            <input name="age" type="number" min="18" required>
+        </p>
+
+        <p>
+            <label>2. What is your gender?</label><br>
+            <select name="gender" required>
+                <option value="" disabled selected>-- Please select --</option>
+                <option value="woman">Woman</option>
+                <option value="man">Man</option>
+                <option value="non_binary">Non-binary</option>
+                <option value="prefer_not_say">Prefer not to say</option>
+                <option value="other">Other</option>
+            </select>
+        </p>
+
+        <p>
+            <label>3. How would you describe your ethnicity?</label><br>
+            <select name="ethnicity" required>
+                <option value="" disabled selected>-- Please select --</option>
+                <option value="white">White</option>
+                <option value="black">Black or African descent</option>
+                <option value="east_asian">East Asian</option>
+                <option value="south_asian">South Asian</option>
+                <option value="southeast_asian">Southeast Asian</option>
+                <option value="latinx">Latinx / Hispanic</option>
+                <option value="middle_eastern">Middle Eastern</option>
+                <option value="indigenous">Indigenous</option>
+                <option value="mixed">Mixed</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_say">Prefer not to say</option>
+            </select>
+        </p>
+
+        <p>
+            <label>4. What is your current employment status?</label><br>
+            <select name="employment" required>
+                <option value="" disabled selected>-- Please select --</option>
+                <option value="employed_full_time">Employed full-time</option>
+                <option value="employed_part_time">Employed part-time</option>
+                <option value="self_employed">Self-employed</option>
+                <option value="student">Student</option>
+                <option value="student_and_employed">Student and Employed</option>
+                <option value="unemployed">Unemployed</option>
+                <option value="other">Other</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+        </p>
+
+        <p>
+            <label>5. What is your current religious or spiritual affiliation?</label><br>
+            <select name="religion" required>
+                <option value="" disabled selected>-- Please select --</option>
+                <option value="christian">Christian</option>
+                <option value="muslim">Muslim</option>
+                <option value="jewish">Jewish</option>
+                <option value="hindu">Hindu</option>
+                <option value="buddhist">Buddhist</option>
+                <option value="sikh">Sikh</option>
+                <option value="other_spirituality">Other / Spirituality</option>
+                <option value="none_atheist_agnostic">None / Atheist / Agnostic</option>
+                <option value="prefer_not_say">Prefer not to say</option>
+            </select>
+        </p>
+
+        <p>
+            <label>6. What is your highest level of education completed?</label><br>
+            <select name="education" required>
+                <option value="" disabled selected>-- Please select --</option>
+                <option value="high_school">High School</option>
+                <option value="some_college_university">Some college / university</option>
+                <option value="undergraduate">Undergraduate degree</option>
+                <option value="graduate">Graduate degree</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+        </p>
+
+        <p>
+          <label>
+            7. Please enter your CloudResearch Connect ID:
+            <br>
+            <input
+              name="connect_id"
+              type="text"
+              required
+              style="width: 300px;"
+            >
+          </label>
+        </p>
+
+    `,
+    button_label: "Continue",
+    on_finish: function(data) {
+        const responses = data.response;
+        const demoData = {
+            participant: PARTICIPANT_ID,
+            age: parseInt(responses.age),
+            gender: responses.gender,
+            ethnicity: responses.ethnicity,
+            employment: responses.employment,
+            religion: responses.religion,
+            education: responses.education,
+            connect_id: responses.connect_id,
+            timestamp: new Date().toISOString()
+        };
+        saveTrialData(demoData); // logs the data
+    }
+};
+
+// Add this trial before your instructions in the timeline
+timeline.push(demographicsTrial);
+
 // Instructions
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
     stimulus: `
         <h2>Welcome to the Experiment!</h2>
-        <p>You will hear a series of short voice recordings, divided into three blocks.</p>
+        <p>You will hear a series of brief voice recordings in which individuals describe the contents of their job portfolio. The recordings will be evenly divided into three experiment blocks.</p>
         <p>After each recording, you will be asked to rate how <b>enthusiastic</b> and how <b>dominant</b> the speaker sounds on a scale of 1–7.</p>
         <p>You may use either the computer speaker or headphones to complete this study. Please ensure you are in a quiet space.</p>
+        <p>If you wish to stop at any point, simply close this page and your data will not be recorded.</p>
         <p>Press <strong>SPACE</strong> to begin.</p>
     `,
     choices: [" "]
@@ -249,16 +383,46 @@ blocks.forEach((blockStimuli, index) => {
             createAudioRatingTrial(stimulus, index + 1, blocks.length)
         );
     });
+
+    // Add break screen after each block (except the last)
+    if (index < blocks.length - 1) {
+        timeline.push({
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: `
+                <h2>End of Block ${index + 1}</h2>
+                <p>You may take a short break if needed.</p>
+                <p>When you are ready to continue, press <strong>SPACE</strong>.</p>
+            `,
+            choices: [" "]
+        });
+    }
 });
 
 // Final thank-you page
 timeline.push({
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<h2>Thank you for participating!</h2><p>You have completed the experiment.</p>`,
+    stimulus: `
+        <h2>Thank you for participating!</h2>
+        <p>You have completed the experiment.</p>
+
+        <div style="
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px dashed #333;
+            display: inline-block;
+            font-size: 20px;
+            font-weight: bold;
+        ">
+            Confirmation Code: ${CONFIRMATION_CODE}
+        </div>
+
+        <p style="margin-top: 20px;">
+            Please copy and paste the above code into CloudResearch to confirm your participation.
+        </p>
+    `,
     choices: "NO_KEYS",
-    trial_duration: 4000
+    trial_duration: 15000
 });
 
 /* ---------- Run Experiment ---------- */
 jsPsych.run(timeline);
-
